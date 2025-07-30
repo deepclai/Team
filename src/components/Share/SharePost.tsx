@@ -6,13 +6,31 @@ const SharePost: React.FC = () => {
   const [caption, setCaption] = useState('');
   const [location, setLocation] = useState('');
   const [tags, setTags] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // File size check (10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Dosya boyutu 10MB\'dan küçük olmalıdır.');
+        return;
+      }
+      
+      // File type check
+      if (!file.type.startsWith('image/')) {
+        setError('Lütfen geçerli bir resim dosyası seçin.');
+        return;
+      }
+      
+      setError(null);
       const reader = new FileReader();
       reader.onload = (e) => {
         setSelectedImage(e.target?.result as string);
+      };
+      reader.onerror = () => {
+        setError('Dosya okuma hatası oluştu.');
       };
       reader.readAsDataURL(file);
     }
@@ -22,10 +40,39 @@ const SharePost: React.FC = () => {
     setSelectedImage(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle post submission
-    console.log({ selectedImage, caption, location, tags });
+    
+    if (!selectedImage || !caption.trim()) {
+      setError('Fotoğraf ve açıklama zorunludur.');
+      return;
+    }
+    
+    if (caption.length > 500) {
+      setError('Açıklama 500 karakterden uzun olamaz.');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setError(null);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Success - reset form
+      setSelectedImage(null);
+      setCaption('');
+      setLocation('');
+      setTags('');
+      
+      // Show success message (you could use a toast library)
+      alert('Hikayeniz başarıyla paylaşıldı!');
+    } catch (error) {
+      setError('Paylaşım sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -45,6 +92,12 @@ const SharePost: React.FC = () => {
 
       {/* Share Form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-md p-6">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+        
         {/* Image Upload */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -56,6 +109,7 @@ const SharePost: React.FC = () => {
                 type="file"
                 accept="image/*"
                 onChange={handleImageUpload}
+                disabled={isSubmitting}
                 className="hidden"
                 id="image-upload"
               />
@@ -93,8 +147,11 @@ const SharePost: React.FC = () => {
             rows={4}
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
+            disabled={isSubmitting}
+            maxLength={500}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
             placeholder="Bu yerin senin için ne ifade ettiğini, neler hissettiğini, hangi anıları canlandırdığını anlat..."
+            required
           />
           <p className="text-sm text-gray-500 mt-1">
             {caption.length}/500 karakter
@@ -112,6 +169,7 @@ const SharePost: React.FC = () => {
             id="location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
+            disabled={isSubmitting}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             placeholder="Neredesin? (örn: Galata Kulesi, İstanbul)"
           />
@@ -128,6 +186,7 @@ const SharePost: React.FC = () => {
             id="tags"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
+            disabled={isSubmitting}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             placeholder="Etiketleri virgülle ayırın (örn: istanbul, manzara, gündoğumu)"
           />
@@ -137,19 +196,28 @@ const SharePost: React.FC = () => {
         <div className="flex space-x-4">
           <button
             type="submit"
-            disabled={!selectedImage || !caption.trim()}
-            className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={!selectedImage || !caption.trim() || isSubmitting}
+            className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
-            Hikayeni Paylaş
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Paylaşılıyor...
+              </>
+            ) : (
+              'Hikayeni Paylaş'
+            )}
           </button>
           <button
             type="button"
+            disabled={isSubmitting}
             className="btn-secondary"
             onClick={() => {
               setSelectedImage(null);
               setCaption('');
               setLocation('');
               setTags('');
+              setError(null);
             }}
           >
             Temizle

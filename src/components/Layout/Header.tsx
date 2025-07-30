@@ -23,6 +23,7 @@ const Header: React.FC = () => {
               </div>
               <input
                 type="text"
+                aria-label="Arama"
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                 placeholder="Konum, kullanıcı veya hikaye ara..."
               />
@@ -31,10 +32,16 @@ const Header: React.FC = () => {
 
           {/* Right side icons */}
           <div className="flex items-center space-x-4">
-            <button className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+            <button 
+              aria-label="Bildirimler"
+              className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+            >
               <Bell className="h-6 w-6" />
             </button>
-            <button className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg transition-colors">
+            <button 
+              aria-label="Mesajlar"
+              className="p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+            >
               <MessageCircle className="h-6 w-6" />
             </button>
             <div className="flex items-center">
@@ -42,6 +49,7 @@ const Header: React.FC = () => {
                 className="h-8 w-8 rounded-full ring-2 ring-primary-500 ring-offset-2"
                 src="https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=150"
                 alt="Profile"
+                loading="lazy"
               />
             </div>
           </div>

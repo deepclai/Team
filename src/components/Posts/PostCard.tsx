@@ -4,15 +4,33 @@ import { Post } from '../../types';
 
 interface PostCardProps {
   post: Post;
+  onLike?: (postId: string, isLiked: boolean) => void;
+  onComment?: (postId: string) => void;
+  onShare?: (postId: string) => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onLike, onComment, onShare }) => {
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(post.likes);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLike = () => {
+  const handleLike = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
     setIsLiked(!isLiked);
     setLikesCount(isLiked ? likesCount - 1 : likesCount + 1);
+    
+    try {
+      await onLike?.(post.id, !isLiked);
+    } catch (error) {
+      // Revert on error
+      setIsLiked(isLiked);
+      setLikesCount(likesCount);
+      console.error('Like failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -61,7 +79,12 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <img
           src={post.image}
           alt="Post content"
+          loading="lazy"
           className="w-full h-80 object-cover"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = 'https://images.pexels.com/photos/1486222/pexels-photo-1486222.jpeg?auto=compress&cs=tinysrgb&w=800';
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
       </div>
@@ -71,18 +94,28 @@ const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <div className="flex items-center space-x-4">
           <button
             onClick={handleLike}
+            disabled={isLoading}
+            aria-label={isLiked ? 'Beğeniyi kaldır' : 'Beğen'}
             className={`flex items-center space-x-2 transition-all duration-200 ${
               isLiked ? 'text-red-500' : 'text-gray-600 hover:text-red-500'
-            }`}
+            } ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Heart className={`w-6 h-6 ${isLiked ? 'fill-current' : ''}`} />
             <span className="font-medium">{likesCount}</span>
           </button>
-          <button className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors">
+          <button 
+            onClick={() => onComment?.(post.id)}
+            aria-label="Yorum yap"
+            className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors"
+          >
             <MessageCircle className="w-6 h-6" />
             <span className="font-medium">{post.comments}</span>
           </button>
-          <button className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors">
+          <button 
+            onClick={() => onShare?.(post.id)}
+            aria-label="Paylaş"
+            className="flex items-center space-x-2 text-gray-600 hover:text-primary-600 transition-colors"
+          >
             <Share2 className="w-6 h-6" />
             <span className="font-medium">{post.shares}</span>
           </button>
